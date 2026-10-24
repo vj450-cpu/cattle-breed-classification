@@ -12,7 +12,7 @@ license: mit
 
 # PashuDrishti AI: Indigenous Cattle Breed Vision & Explainability Platform 🐂🔬
 
-[![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces%20Live%20(16GB%20RAM)-yellow.svg)](https://huggingface.co/spaces/vj450-cpu/pashudrishti-cattle-vision)
+[![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces%20Live%20(16GB%20RAM)-yellow.svg)](https://huggingface.co/spaces/vijay450/pashudrishti-cattle-vision)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg?logo=python&logoColor=white)](https://www.python.org/)
 [![PyTorch 2.1+](https://img.shields.io/badge/PyTorch-2.1%2B-EE4C2C.svg?logo=pytorch&logoColor=white)](https://pytorch.org/)
 [![ConvNeXt-Small](https://img.shields.io/badge/Architecture-ConvNeXt--Small-success.svg)](https://arxiv.org/abs/2201.03545)
@@ -27,7 +27,7 @@ license: mit
 
 ## 🌐 Submission URLs & Live Web Deployments
 
-- 🚀 **Live Production Web Application (`G084_Website.url`)**: [https://huggingface.co/spaces/vj450-cpu/pashudrishti-cattle-vision](https://huggingface.co/spaces/vj450-cpu/pashudrishti-cattle-vision) *(Runs with 16 GB RAM + PyTorch ConvNeXt on Hugging Face Spaces)*
+- 🚀 **Live Production Web Application (`G084_Website.url`)**: [https://huggingface.co/spaces/vijay450/pashudrishti-cattle-vision](https://huggingface.co/spaces/vijay450/pashudrishti-cattle-vision) *(Runs with 16 GB RAM + PyTorch ConvNeXt on Hugging Face Spaces)*
 - 💻 **Official Source Repository (`G084_Github.url`)**: [https://github.com/vj450-cpu/cattle-breed-classification](https://github.com/vj450-cpu/cattle-breed-classification)
 - 📱 **Static Visual Demo (GitHub Pages)**: [https://vj450-cpu.github.io/cattle-breed-classification/](https://vj450-cpu.github.io/cattle-breed-classification/)
 - ☁️ **Alternative Cloud Container (Render)**: [https://pashudrishti-cattle-vision.onrender.com](https://pashudrishti-cattle-vision.onrender.com)
