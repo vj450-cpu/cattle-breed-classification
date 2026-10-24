@@ -2,7 +2,7 @@
 title: PashuDrishti AI Cattle Vision
 emoji: 🐂
 colorFrom: yellow
-colorTo: amber
+colorTo: yellow
 sdk: gradio
 sdk_version: 4.20.0
 app_file: app.py
