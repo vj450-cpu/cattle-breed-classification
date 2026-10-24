@@ -62,9 +62,22 @@ def predict_cattle_breed(image, colormap="jet", blend_alpha=0.52):
     if image is None:
         return {}, None, None, "", ""
     
-    # Run real ConvNeXt model with Grad-CAM
-    model = get_model()
-    res = model.analyze(image, colormap=colormap, alpha=blend_alpha)
+    try:
+        model = get_model()
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        model.to_device(device)
+        res = model.analyze(image, colormap=colormap, alpha=blend_alpha)
+    except Exception as e:
+        import traceback
+        err_msg = traceback.format_exc()
+        print(f"[Inference Error]: {err_msg}")
+        try:
+            model = get_model()
+            model.to_device(torch.device("cpu"))
+            res = model.analyze(image, colormap=colormap, alpha=blend_alpha)
+        except Exception as e2:
+            print(f"[Fatal Inference Error]: {traceback.format_exc()}")
+            return {}, None, None, f"### ⚠️ Diagnostics Alert\nAn issue occurred during inference: `{str(e2)}`", f"### 🔬 Traceback\n```\n{err_msg}\n```"
     
     primary = res["primary_prediction"]
     top_cands = res["top_candidates"]

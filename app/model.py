@@ -100,6 +100,13 @@ class CattleBreedModel:
             transforms.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
         ])
 
+    def to_device(self, device: torch.device):
+        """Dynamically switch between CUDA (ZeroGPU) and CPU execution."""
+        if self.model is not None:
+            self.device = device
+            self.dtype = torch.float32 if device.type == "cuda" else torch.bfloat16
+            self.model.to(self.device, dtype=self.dtype)
+
     def _register_gradcam_hooks(self):
         """Register forward hook on the last block of the final stage."""
         target_layer = self.model.stages[-1].blocks[-1]
