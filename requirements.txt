@@ -7,3 +7,7 @@ requests>=2.31.0
 matplotlib>=3.7.0
 timm>=0.9.12
 google-generativeai>=0.4.0
+torch>=2.0.0
+torchvision>=0.15.0
+gradio>=4.20.0
+

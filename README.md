@@ -3,8 +3,9 @@ title: PashuDrishti AI Cattle Vision
 emoji: 🐂
 colorFrom: yellow
 colorTo: amber
-sdk: docker
-app_port: 7860
+sdk: gradio
+sdk_version: 4.20.0
+app_file: app.py
 pinned: false
 license: mit
 ---
