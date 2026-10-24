@@ -10,9 +10,11 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
+import torch
 
 from app.model import CattleBreedModel
 from app.gemini_explainer import CattleGeminiExplainer
+from app.breed_data import CATTLE_CLASSES
 
 app = FastAPI(
     title="PashuDrishti AI: Indigenous Cattle Breed Vision & Explainability Platform",
@@ -29,13 +31,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize Model & Explainer Singletons
+# Static Directories
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 SAMPLES_DIR = os.path.join(STATIC_DIR, "samples")
 
-model = CattleBreedModel()
+_model = None
 explainer = CattleGeminiExplainer()
+
+def get_model() -> CattleBreedModel:
+    global _model
+    if _model is None:
+        _model = CattleBreedModel()
+    return _model
 
 # Static Files
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
@@ -52,16 +60,17 @@ async def serve_home():
 
 @app.get("/api/model-info")
 async def get_model_info():
-    """Return model architecture and accuracy metrics."""
+    """Return model architecture and accuracy metrics instantaneously."""
+    is_cuda = torch.cuda.is_available()
     return {
         "architecture": "ConvNeXt-Small (convnext_small.fb_in22k_ft_in1k_384)",
         "resolution": "384x384 Bicubic",
-        "num_classes": model.num_classes,
-        "classes": model.classes,
+        "num_classes": len(CATTLE_CLASSES),
+        "classes": CATTLE_CLASSES,
         "validation_accuracy": "82.62%",
-        "device": str(model.device),
-        "cuda_available": str(model.device).startswith("cuda"),
-        "weights_source": "C:\\Users\\Vijay\\best_cattle_model.pth"
+        "device": "cuda:0" if is_cuda else "cpu",
+        "cuda_available": is_cuda,
+        "status": "online"
     }
 
 
@@ -106,7 +115,7 @@ async def predict_breed(
             raise HTTPException(status_code=400, detail="Either 'file' or 'sample_name' must be provided.")
 
         # Execute ConvNeXt analysis + Grad-CAM
-        results = model.analyze(
+        results = get_model().analyze(
             image=image,
             target_class_idx=target_class_idx,
             colormap=colormap,

@@ -4,7 +4,7 @@ FROM python:3.11-slim
 # Prevent Python from writing .pyc and enable buffer flushing
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-ENV PORT=8000
+ENV PORT=10000
 
 # Install system dependencies for OpenCV and PIL
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Install CPU PyTorch first for fast minimal image size (or mount GPU runtime)
+# Install lightweight CPU-only PyTorch first
 RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu
 
 # Install application dependencies
@@ -28,12 +28,7 @@ COPY app/ ./app/
 COPY scripts/ ./scripts/
 COPY run.py .
 
-# Expose FastAPI port
-EXPOSE 8000
-
-# Healthcheck
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/api/model-info || exit 1
+EXPOSE 10000
 
 # Start Uvicorn ASGI server with dynamic port support
-CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-10000}"]
