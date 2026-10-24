@@ -177,6 +177,42 @@ document.addEventListener('DOMContentLoaded', () => {
       viewportContainer.style.display = 'flex';
     }
 
+    // Show active scanning state in placeholderCard
+    if (placeholderCard) {
+      placeholderCard.style.display = 'block';
+      resultCard.style.display = 'none';
+      attentionCard.style.display = 'none';
+      placeholderCard.innerHTML = `
+        <div class="empty-art">
+          <i class="fa-solid fa-microchip fa-spin" style="color: var(--gold-400); font-size: 38px;"></i>
+        </div>
+        <h3 style="color: var(--gold-300); margin: 12px 0 6px;"><i class="fa-solid fa-spinner fa-spin"></i> Neural Engine Analyzing Specimen...</h3>
+        <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 16px;">Running ConvNeXt-Small 384x384 inference & synthesizing Grad-CAM attention maps...</p>
+        <div class="feature-bullets">
+          <div class="bullet-item" style="color: var(--gold-300);">
+            <i class="fa-solid fa-circle-notch fa-spin"></i>
+            <span>Extracting 384×384 bicubic tensor representation</span>
+          </div>
+          <div class="bullet-item">
+            <i class="fa-solid fa-check"></i>
+            <span>Evaluating 50 indigenous cattle breed classification profiles</span>
+          </div>
+          <div class="bullet-item">
+            <i class="fa-solid fa-check"></i>
+            <span>Computing cranial horn & thoracic dewlap Grad-CAM saliency</span>
+          </div>
+        </div>
+        <div id="coldStartNotice" style="display: none; margin-top: 16px; padding: 12px; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; font-size: 12px; color: #fde68a;">
+          <i class="fa-solid fa-hourglass-start fa-spin"></i> Cloud container is waking up from sleep (Render Free Tier takes ~30s on first cold start). Please keep this tab open!
+        </div>
+      `;
+    }
+
+    const coldTimer = setTimeout(() => {
+      const el = document.getElementById('coldStartNotice');
+      if (el) el.style.display = 'block';
+    }, 4000);
+
     // Attempt live API call if possible
     let apiSuccess = false;
     if (currentFile || !currentSampleId) {
@@ -190,6 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const res = await fetch(`${getApiBaseUrl()}/api/predict`, { method: 'POST', body: formData });
         if (res.ok) {
           const data = await res.json();
+          clearTimeout(coldTimer);
           currentPredictions = data;
           activeClassIdx = data.selected_class_index;
           renderResults(data);
@@ -209,6 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const res = await fetch(`${getApiBaseUrl()}/api/predict`, { method: 'POST', body: formData });
         if (res.ok) {
           const data = await res.json();
+          clearTimeout(coldTimer);
           currentPredictions = data;
           activeClassIdx = data.selected_class_index;
           renderResults(data);
@@ -223,6 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const db = await getPresetData();
         if (db && db[currentSampleId]) {
           const preset = db[currentSampleId];
+          clearTimeout(coldTimer);
           currentPredictions = preset;
           activeClassIdx = preset.selected_class_index;
           renderResults(preset);
@@ -231,11 +270,33 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
+    clearTimeout(coldTimer);
+
     if (!apiSuccess && currentFile) {
-      if (window.cowMascot) {
-        window.cowMascot.say("Processing custom specimen... Connecting to neural inference engine! 🐂");
+      if (placeholderCard) {
+        placeholderCard.innerHTML = `
+          <div class="empty-art">
+            <i class="fa-solid fa-circle-exclamation" style="color: #f59e0b; font-size: 40px;"></i>
+          </div>
+          <h3 style="color: #f59e0b; margin: 12px 0 6px;">Server Waking Up or Connecting</h3>
+          <p style="color: var(--text-secondary); font-size: 13px;">The free cloud container is currently booting up (Render Free Tier cold start) or processing.</p>
+          <div style="margin: 18px 0; display: flex; gap: 12px; justify-content: center;">
+            <button class="btn btn-primary" id="btnRetryInference">
+              <i class="fa-solid fa-rotate-right"></i> Retry Analysis
+            </button>
+          </div>
+          <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">
+            💡 <strong>Fastest Local Option:</strong> Run <code>python run.py</code> on your laptop to run inference on your local RTX 4050 GPU in <strong>18ms</strong> with your checkpoint!
+          </p>
+        `;
+        const retryBtn = document.getElementById('btnRetryInference');
+        if (retryBtn) {
+          retryBtn.addEventListener('click', () => runPrediction());
+        }
       }
-      console.warn("Live file upload API did not respond. Check backend server logs or network status.");
+      if (window.cowMascot) {
+        window.cowMascot.say("Cloud server is booting up! Click 'Retry Analysis' in a few seconds! 🐂");
+      }
     }
 
     scannerLaser.style.display = 'none';
