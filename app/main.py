@@ -45,7 +45,12 @@ def get_model() -> CattleBreedModel:
         _model = CattleBreedModel()
     return _model
 
-# Static Files
+# Static Files & Subdirectories Mount
+for sub_dir in ["css", "js", "samples", "images"]:
+    dir_path = os.path.join(STATIC_DIR, sub_dir)
+    if os.path.exists(dir_path):
+        app.mount(f"/{sub_dir}", StaticFiles(directory=dir_path), name=sub_dir)
+
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
