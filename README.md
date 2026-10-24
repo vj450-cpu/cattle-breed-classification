@@ -72,7 +72,7 @@ The complete single-page interactive web application is deployed live with zero 
 ### 1. SOTA ConvNeXt-Small Deep Learning Engine
 - Trained on **50 Indigenous Indian & Dairy Cattle Breeds** using high-precision $384 \times 384$ bicubic resolution.
 - Modern training regularization: **Mixup ($\alpha=0.8$)**, **CutMix ($\alpha=1.0$)**, **DropPath (Stochastic Depth $=0.2$)**, **AdamW**, and **Cosine Annealing Learning Rate Schedule**.
-- Achieves **82.62% peak validation accuracy** and **74.58% unseen test accuracy with Test-Time Augmentation (TTA)**, outperforming ResNet-50 by $+10.48\%$ and Vision Transformers (ViT) by $+11.80\%$.
+- Achieves **82.62% peak validation accuracy** and **81.94% unseen test accuracy with Test-Time Augmentation (TTA)** on the Full 50-class dataset (1,960 test specimens), outperforming legacy baselines by over $+9.94\%$.
 
 ### 2. Grad-CAM Visual Explainability & Receptive Field Attribution
 - Extracts gradient activations from the final block of ConvNeXt Stage 4 (`stages[-1].blocks[-1]`).
@@ -106,25 +106,40 @@ The complete single-page interactive web application is deployed live with zero 
 
 ---
 
-## 📊 Empirical Benchmarks
+## 📊 Empirical Benchmarks & Diagnostic Evaluation
 
-Extensive evaluation on $N = 767$ unseen test specimens across 50 classes:
+All models were evaluated on unseen test splits across **50 indigenous and dairy cattle breeds**:
 
-| Model | Input Size | Params | Peak Val Acc | Unseen Test Acc (TTA) | Top-5 Acc | Latency (GPU) |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **ConvNeXt-Small (Ours)** | **384 × 384** | **50.2 M** | **82.62%** | **74.58%** | **96.42%** | **18.4 ms** |
-| ResNet-50 Baseline | 224 × 224 | 25.6 M | 72.14% | 66.80% | 89.31% | 11.2 ms |
-| Vision Transformer (ViT-B/16) | 384 × 384 | 86.6 M | 70.82% | 65.41% | 88.54% | 34.6 ms |
-| Single-Cow Isolated Baseline | 384 × 384 | 50.2 M | 69.40% | 64.12% | 87.20% | 18.2 ms |
-| Initial Legacy Baseline | 224 × 224 | 25.6 M | 72.00% | 63.85% | 85.90% | 12.0 ms |
+### 🏆 Benchmark Across Datasets & Model Iterations
 
-### Perfect Precision Breeds (100% Test Accuracy):
-- **Bargur** (8 / 8) — 100.0%
-- **Khariar** (14 / 14) — 100.0%
-- **Purnea** (30 / 30) — 100.0%
-- **Red Kandhari** (23 / 23) — 100.0%
+| Model & Architecture | Dataset Split | Test Images ($N$) | Peak Val Acc (%) | Unseen Test Acc (TTA) (%) | Test Correct / Misclassified | Checkpoint / Source |
+| :--- | :--- | :---: | :---: | :---: | :---: | :--- |
+| **ConvNeXt-Small (SOTA Full Model)** | **Full Dataset (`cattle_split`)** | **1,960** | **82.62%** | **81.94%** | **1,606 / 354** | `best_cattle_model.pth` (Epoch 30, lr=1e-4, Mixup+CutMix) |
+| **ConvNeXt-Small (Reduced Split)** | Reduced Dataset (`cattle_split_reduced`) | **767** | **77.81%** | **74.58%** | **572 / 195** | `ACCURACY.docx` (TTA 5-crop evaluation) |
+| **ConvNeXt-Small (Clean Single-Cow)** | Isolated Single Specimen (`clean_cattle_split`) | **768** | **71.49%** | **69.79%** | **536 / 232** | `best_single_cattle_model.pth` (`singlecow.ipynb`) |
+| **Old Baseline Model (Full Dataset)** | Full Dataset (Legacy Baseline) | — | — | **72.00%** | — | `OLD MODEL Accuracy.docx` |
+| **Old Baseline Model (Single Cow)** | Single Cow (Legacy Baseline) | — | — | **69.00%** | — | `OLD MODEL Accuracy.docx` |
 
-Detailed confusion matrices, per-class metrics, and taxonomic overlap analysis are documented in [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
+> **Key Performance Milestone:** On the Full 50-class dataset, test accuracy jumped from **~73.98%** (at epoch 18) up to **81.94%** (at epoch 30), demonstrating the effectiveness of the Cosine Annealing learning rate schedule combined with Mixup ($\alpha=0.8$), CutMix ($\alpha=1.0$), and Stochastic Depth ($0.2$).
+
+---
+
+### 🥇 Top Performing Breeds (Full SOTA Dataset, $N = 1,960$)
+- **Purnea**: **100.0%** (67 / 67 correct)
+- **Siri**: **97.78%** (44 / 45 correct)
+- **Khariar**: **96.67%** (29 / 30 correct)
+- **Ayrshire**: **96.15%** (50 / 52 correct)
+- **Thutho**: **95.83%** (46 / 48 correct)
+- **Bhelai**: **95.65%** (22 / 23 correct)
+- **Umblachery**: **94.74%** (54 / 57 correct)
+
+### 🔍 Top Confused Breed Pairs (Full SOTA Dataset)
+The remaining errors occur almost exclusively between pairs of breeds that share deep phenotypic and regional kinship:
+- **White / Grey Breeds**: Nari $\longleftrightarrow$ Malvi (6 images each direction), Shweta Kapila $\longleftrightarrow$ Dagri / Malvi (6 images each), Hariana $\rightarrow$ Tharparkar (5 images), Gangatari $\rightarrow$ Shweta Kapila (5 images).
+- **Red / Brown Breeds**: Red Sindhi $\rightarrow$ Sahiwal (6 images), Gir $\rightarrow$ Sahiwal (4 images).
+- **Regional / Dwarf Breeds**: Motu $\rightarrow$ Lakhimi (5 images), Hallikar $\rightarrow$ Khillari (4 images).
+
+For complete confusion matrices, reduced dataset metrics, and per-class analyses, see [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
 
 ---
 

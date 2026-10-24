@@ -1,113 +1,137 @@
 # Empirical Benchmarks & Diagnostic Evaluation 📊
 
-This document provides complete empirical benchmark results, confusion pair analyses, and comparative architecture evaluations for **PashuDrishti AI: Indigenous Cattle Breed Vision & Explainability Platform**.
+This document provides verified empirical benchmark results, confusion pair analyses, and comparative evaluations extracted directly from experimental logs and evaluations for **PashuDrishti AI: Indigenous Cattle Breed Vision & Explainability Platform**.
 
 ---
 
-## 🏆 1. Model Architecture Comparison
+## 🏆 1. Model Progression & Dataset Benchmark Comparison
 
-All architectures were evaluated under identical 5-fold cross-validation and tested on unseen specimens ($N = 767$ test images across 50 indigenous cattle classes):
+All evaluations reflect authentic empirical results tested across 50 indigenous and dairy cattle classes with **Test-Time Augmentation (TTA)**:
 
-| Architecture | Input Resolution | Parameters | Peak Val Acc (%) | Unseen Test Acc (TTA) (%) | Top-5 Accuracy (%) | Inference Latency (GPU) |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **ConvNeXt-Small (Ours)** | **384 × 384** | **50.2 M** | **82.62%** | **74.58%** | **96.42%** | **18.4 ms** |
-| ResNet-50 Baseline | 224 × 224 | 25.6 M | 72.14% | 66.80% | 89.31% | 11.2 ms |
-| Vision Transformer (ViT-B/16) | 384 × 384 | 86.6 M | 70.82% | 65.41% | 88.54% | 34.6 ms |
-| Single-Cow Isolated Baseline | 384 × 384 | 50.2 M | 69.40% | 64.12% | 87.20% | 18.2 ms |
-| Initial Legacy Baseline | 224 × 224 | 25.6 M | 72.00% | 63.85% | 85.90% | 12.0 ms |
+| Model Architecture & Pipeline | Dataset Split & Scope | Total Test Images ($N$) | Peak Val Acc (%) | Unseen Test Acc (with TTA) (%) | Test Correct / Misclassifications | Checkpoint / Source |
+| :--- | :--- | :---: | :---: | :---: | :---: | :--- |
+| **ConvNeXt-Small (SOTA Full Model)** | **Full Dataset (`cattle_split`)** | **1,960** | **82.62%** | **81.94%** | **1,606 / 354** | `best_cattle_model.pth` (`fullDatasetNew.ipynb`) |
+| **ConvNeXt-Small (Reduced Split)** | Reduced Split (`cattle_split_reduced`) | **767** | **77.81%** | **74.58%** | **572 / 195** | `ACCURACY.docx` |
+| **ConvNeXt-Small (Single-Cow Cleaned)** | Isolated Specimen (`clean_cattle_split`) | **768** | **71.49%** | **69.79%** | **536 / 232** | `best_single_cattle_model.pth` (`singlecow.ipynb`) |
+| **Old Baseline Model (Full Dataset)** | Full Dataset (Legacy Baseline) | — | — | **72.00%** | — | `OLD MODEL Accuracy.docx` |
+| **Old Baseline Model (Single Cow)** | Single Cow (Legacy Baseline) | — | — | **69.00%** | — | `OLD MODEL Accuracy.docx` |
 
-> **Key Takeaway:** ConvNeXt-Small with bicubic 384×384 input resolution outperforms both traditional convolutional networks (ResNet-50) and patch-based Vision Transformers (ViT) by **+10.48%** validation accuracy. ConvNeXt's inverted bottleneck depthwise separable design preserves fine anatomical grain (horn ridges, cranial convexities, dewlap folds) that ViT patches smooth out.
+> **Key Performance Milestone:** On the Full 50-class dataset, test accuracy jumped from **~73.98%** (at epoch 18) up to **81.94%** (at epoch 30), achieving a $+9.94\%$ gain over the original 72% baseline model through modern computer vision regularization (Mixup, CutMix, DropPath, AdamW, and Cosine Annealing).
 
 ---
 
-## 🎯 2. Unseen Test Set Diagnostic Performance (TTA)
+## 🎯 2. Full SOTA Dataset Diagnostic Evaluation ($N = 1,960$ Test Images)
 
-- **Total Unseen Test Images**: 767
-- **Correctly Classified**: 572
-- **Incorrectly Classified**: 195
-- **Overall Top-1 Accuracy**: **74.58%**
-- **Test-Time Augmentation (TTA)**: 5-crop multi-scale averaging (+2.96% accuracy over single-crop inference).
+- **Total Unseen Test Specimens**: 1,960
+- **Correctly Classified**: 1,606
+- **Total Misclassifications**: 354
+- **Final Test Accuracy (with Horizontal-Flip TTA)**: **81.94%**
+- **Peak Validation Accuracy**: **82.62%** (Epoch 30, Validation Loss: 0.6606)
 
-### 🥇 Top 10 Breeds with Perfect or Superior Precision (100% - 90%)
-| Breed Name | Class Index | Correct / Total | Accuracy (%) | Phenotypic Distinctiveness |
+### 🥇 Top 7 Best Performing Breeds
+| Breed Name | Class Index | Correct / Total | Accuracy (%) | Morphological Hallmarks |
 | :--- | :---: | :---: | :---: | :--- |
-| **Bargur** | 6 | 8 / 8 | **100.0%** | Distinct brown/white roan spots, sharp trotting horns |
-| **Khariar** | 22 | 14 / 14 | **100.0%** | Compact grey frame, characteristic neck structure |
-| **Purnea** | 37 | 30 / 30 | **100.0%** | Uniform small stature, unique eastern cranial profile |
-| **Red Kandhari** | 40 | 23 / 23 | **100.0%** | Deep uniform dark crimson-red coat |
-| **Vechur** | 49 | 24 / 25 | **96.0%** | Extreme ultra-miniature proportions, delicate horns |
-| **Punganur** | 36 | 21 / 22 | **95.4%** | Dwarf stature, semi-curved crescent horns |
-| **Kangayam** | 20 | 28 / 30 | **93.3%** | Stout outward-backward horns, dark charcoal draught points |
-| **Ongole** | 35 | 32 / 35 | **91.4%** | Massive bull hump, porcelain white hide, stumpy horns |
-| **Sahiwal** | 42 | 26 / 29 | **89.6%** | Pendulous loose 'Lola' dewlap, reddish-dun milch frame |
-| **Gir** | 13 | 25 / 28 | **89.3%** | Bulging convex cranial dome, pendulous curled leaf ears |
+| **Purnea** | 37 | 67 / 67 | **100.0%** | Uniform small stature, unique eastern cranial profile |
+| **Siri** | 48 | 44 / 45 | **97.78%** | Thick mountain coat, humped neck, Himalayan draught frame |
+| **Khariar** | 22 | 29 / 30 | **96.67%** | Compact grey frame, dark muzzle, alert cranial expression |
+| **Ayrshire** | 1 | 50 / 52 | **96.15%** | Classic red and white piebald dairy conformation |
+| **Thutho** | 49 | 46 / 48 | **95.83%** | Northeastern indigenous hill cattle, unique horn curvature |
+| **Bhelai** | 38 | 22 / 23 | **95.65%** | Distinctive regional pastoral coat and frame |
+| **Umblachery** | 43 | 54 / 57 | **94.74%** | Grey coat with white face star and white sock markings |
+
+### ⚠️ Lowest Performing Breeds (High Phenotypic Overlap)
+| Breed Name | Correct / Total | Accuracy (%) | Primary Confounding Factors |
+| :--- | :---: | :---: | :--- |
+| **Badri** | 8 / 21 | **38.10%** | Diverse coat colors in hill pastoral herds, mistaken for Sahiwal |
+| **Gangatari** | 16 / 37 | **43.24%** | White/grey coat overlap with Shweta Kapila and Malvi |
+| **Krishna Valley** | 14 / 32 | **43.75%** | Dark grey shoulder shading shared with other southern draught breeds |
+| **Dagri** | 15 / 29 | **51.72%** | Pale coloration frequently confounded with Shweta Kapila |
+| **Kherigarh** | 17 / 30 | **56.67%** | Compact white frame confused with Malvi |
 
 ---
 
-## 🔍 3. Confusion Pairs & Phenotypic Overlap Analysis
+## 🔍 3. Top Confusion Pairs (Full SOTA Dataset)
 
-Empirical evaluation of the top confusion pairs reveals deep biological and geographic kinship between closely related breeds:
+The remaining errors are almost exclusively between pairs of breeds that are extremely close in visual appearance:
 
 ```mermaid
 graph TD
-    A[Hariana] <-->|7 errors| B[Tharparkar]
-    C[Motu] <-->|6 errors| D[Lakhimi]
-    E[Ongole] <-->|5 errors| F[Gaolao]
-    G[Shweta Kapila] <-->|5 errors| H[Malvi]
-    I[Kherigarh] <-->|5 errors| J[Malvi]
-    K[Kangayam] <-->|4 errors| L[Kenkatha]
-    M[Kosali] <-->|4 errors| N[Motu]
-    O[Khillari] <-->|3 errors| P[Hallikar]
+    subgraph White / Grey Breeds
+        A[Nari] <-->|6 images each| B[Malvi]
+        C[Shweta Kapila] <-->|6 images each| D[Dagri / Malvi]
+        E[Hariana] -->|5 images| F[Tharparkar]
+        G[Gangatari] -->|5 images| H[Shweta Kapila]
+    end
+    subgraph Red / Brown Breeds
+        I[Red Sindhi] -->|6 images| J[Sahiwal]
+        K[Gir] -->|4 images| L[Sahiwal]
+    end
+    subgraph Regional / Dwarf Breeds
+        M[Motu] -->|5 images| N[Lakhimi]
+        O[Hallikar] -->|4 images| P[Khillari]
+    end
 ```
 
-### In-Depth Taxonomic Rationale:
-1. **Hariana $\leftrightarrow$ Tharparkar (7 confusion errors)**:
-   - *Phenotypic Overlap*: Both are premier white/grey zebu dual-purpose cattle native to adjoining arid/semi-arid tracts (Haryana and Thar Desert). Both share medium stumpy horns, compact humps, and reflective pale coats.
-   - *Grad-CAM Diagnostic*: The model differentiates them primarily when the muzzle rim is visible (Tharparkar has a lighter muzzle ring compared to Hariana's slate-black muzzle).
-2. **Ongole $\leftrightarrow$ Gaolao (5 confusion errors)**:
-   - *Phenotypic Overlap*: Gaolao was historically bred from Ongole lineage brought to Central India (Wardha/Nagpur). Both exhibit white-grey coats, prominent humps, and long faces.
-   - *Grad-CAM Diagnostic*: Gaolao specimens have slightly more upward-facing horn roots, which our Grad-CAM Horn Region successfully isolates.
-3. **Khillari $\leftrightarrow$ Hallikar (3 confusion errors)**:
-   - *Phenotypic Overlap*: Both belong to the celebrated Amritmahal / Mysore draught group. They share long, backward-swept spear horns and lean grey muscular frames.
-   - *Grad-CAM Diagnostic*: Differentiated by forehead width and horn root tightness at the crown.
+### 🚨 Top High-Confidence Misclassifications:
+| Test Specimen File | True Breed | Model Prediction | Model Confidence | Root Cause |
+| :--- | :--- | :--- | :---: | :--- |
+| `Hallikar_167.jpeg` | **Hallikar** | **Khillari** | **96.98%** | Shared Mysore draught group backward-swept spear horns |
+| `Pulikulam_62.jpg` | **Pulikulam** | **Kangayam** | **95.85%** | Shared Kongu/Tamil Nadu draught morphology and steel grey points |
+| `00000005.jpg` | **Malnad_gidda** | **Vechur** | **95.84%** | Extreme dwarf proportions shared between southern rainforest breeds |
+| `image_275x183_45.jpg` | **Malvi** | **Nari** | **95.62%** | Identical silver-grey coat with dark charcoal shaded points |
 
 ---
 
-## ⚙️ 4. Training Hyperparameters & Regularization SOTA
+## 📊 4. Reduced Dataset Diagnostic Performance ($N = 767$ Test Images)
 
-The production ConvNeXt-Small model was trained using modern computer vision regularization to prevent overfitting across fine-grained classes:
+- **Total Test Images**: 767 across 50 breeds
+- **Correct Predictions**: 572
+- **Incorrect Predictions**: 195
+- **Overall Test Accuracy (with TTA)**: **74.58%**
+- **Peak Validation Accuracy**: **77.81%**
+
+### 100% Precision Breeds (Reduced Dataset):
+- **Bargur**: 8 / 8 (100.0%)
+- **Khariar**: 14 / 14 (100.0%)
+- **Purnea**: 30 / 30 (100.0%)
+- **Red Kandhari**: 23 / 23 (100.0%)
+- **Ponwar**: 100.0%
+
+### Top Confused Pairs (Reduced Dataset):
+- **Hariana $\rightarrow$ Tharparkar**: 7 images
+- **Motu $\rightarrow$ Lakhimi**: 6 images
+- **Ongole $\rightarrow$ Gaolao**: 5 images
+- **Shweta Kapila $\rightarrow$ Malvi**: 5 images
+- **Kherigarh $\rightarrow$ Malvi**: 5 images
+
+---
+
+## ⚙️ 5. Training Hyperparameters & Regularization Pipeline
 
 ```python
-Hyperparameters = {
-    "Model Architecture": "convnext_small.fb_in22k_ft_in1k_384",
-    "Pretraining Weights": "ImageNet-22K fine-tuned on 1K @ 384x384",
-    "Image Resolution": "384 x 384 (Bicubic Interpolation)",
+Training_Configuration = {
+    "Architecture": "convnext_small.fb_in22k_ft_in1k_384",
+    "Pretraining": "ImageNet-22K fine-tuned on ImageNet-1K @ 384x384",
+    "Resolution": "384 x 384 Bicubic Interpolation",
     "Batch Size": 16,
-    "Optimizer": "AdamW (lr=1e-4, weight_decay=1e-2, betas=(0.9, 0.999))",
-    "Scheduler": "CosineAnnealingLR (T_max=30, eta_min=1e-6)",
-    "Data Augmentations": [
-        "RandomResizedCrop(384, scale=(0.8, 1.0))",
-        "RandomHorizontalFlip(p=0.5)",
-        "ColorJitter(brightness=0.15, contrast=0.15, saturation=0.15)",
-        "RandomRotation(degrees=10)"
-    ],
+    "Optimizer": "AdamW (betas=(0.9, 0.999), weight_decay=1e-2)",
+    "Learning Rate": "1e-4 initial with 3-epoch linear warmup",
+    "LR Scheduler": "CosineAnnealingLR (T_max=30, eta_min=1e-6)",
     "Regularization": {
         "DropPath (Stochastic Depth)": 0.20,
         "Dropout": 0.15,
         "Label Smoothing": 0.10,
-        "Mixup Alpha": 0.8,
-        "CutMix Alpha": 1.0
+        "Mixup": "alpha = 0.8",
+        "CutMix": "alpha = 1.0"
     },
     "Training Epochs": 30,
-    "Mixed Precision": "AMP (FP16)"
+    "Precision": "Automatic Mixed Precision (AMP FP16)"
 }
 ```
 
 ---
 
-## 🩺 5. Grad-CAM Anatomical Region Contribution Metrics
-
-Across the 50 classes, the model's discriminative attention maps were partitioned into three livestock anatomical zones:
+## 🩺 6. Grad-CAM Anatomical Region Saliency Contribution
 
 $$\text{Saliency}_{\text{Zone}} = \frac{\sum_{(x,y) \in \text{Zone}} \text{GradCAM}(x, y)}{\sum_{(x,y)} \text{GradCAM}(x, y)} \times 100\%$$
 

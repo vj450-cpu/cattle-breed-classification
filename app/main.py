@@ -68,6 +68,7 @@ async def get_model_info():
         "num_classes": len(CATTLE_CLASSES),
         "classes": CATTLE_CLASSES,
         "validation_accuracy": "82.62%",
+        "test_accuracy": "81.94%",
         "device": "cuda:0" if is_cuda else "cpu",
         "cuda_available": is_cuda,
         "status": "online"
