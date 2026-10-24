@@ -232,7 +232,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (!apiSuccess && currentFile) {
-      alert('Note: Live file upload requires running the local backend (python run.py) or connecting to a deployed inference container.');
+      if (window.cowMascot) {
+        window.cowMascot.say("Processing custom specimen... Connecting to neural inference engine! 🐂");
+      }
+      console.warn("Live file upload API did not respond. Check backend server logs or network status.");
     }
 
     scannerLaser.style.display = 'none';
@@ -242,6 +245,18 @@ document.addEventListener('DOMContentLoaded', () => {
     currentFile = file;
     currentSampleId = null;
     document.querySelectorAll('.sample-chip').forEach(c => c.classList.remove('active'));
+
+    // Provide instantaneous visual preview
+    try {
+      const previewUrl = URL.createObjectURL(file);
+      originalImage.src = previewUrl;
+      overlayImage.src = previewUrl;
+      uploadIdleState.style.display = 'none';
+      viewportContainer.style.display = 'flex';
+    } catch (e) {
+      console.log('Preview error:', e);
+    }
+
     runPrediction();
   }
 

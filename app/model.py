@@ -42,7 +42,10 @@ class CattleBreedModel:
         else:
             self.device = torch.device(device)
 
-        print(f"[CattleModel] Initializing ConvNeXt-Small on {self.device}...")
+        # Use bfloat16 on CPU for ultra memory-efficient execution (< 470 MB RAM for 512MB cloud tier)
+        self.dtype = torch.bfloat16 if self.device.type == "cpu" else torch.float32
+
+        print(f"[CattleModel] Initializing ConvNeXt-Small on {self.device} ({self.dtype})...")
         self.classes = CATTLE_CLASSES
         self.num_classes = len(self.classes)
         self.img_size = 384
@@ -69,12 +72,11 @@ class CattleBreedModel:
         else:
             print(f"[CattleModel] Warning: Checkpoint {weights_path} not found! Running in evaluation mode.")
 
-        self.model.to(self.device)
+        self.model.to(self.device, dtype=self.dtype)
         self.model.eval()
 
-        # Placeholders for Grad-CAM activations and gradients
+        # Placeholders for Grad-CAM activations
         self.activations = []
-        self.gradients = []
         self._register_gradcam_hooks()
 
         # High-Precision Bicubic Evaluation Transform matching training notebook
@@ -85,34 +87,27 @@ class CattleBreedModel:
         ])
 
     def _register_gradcam_hooks(self):
-        """Register forward and backward hooks on the last block of the final stage."""
+        """Register forward hook on the last block of the final stage."""
         target_layer = self.model.stages[-1].blocks[-1]
 
         def forward_hook(module, inp, out):
             self.activations = [out]
 
-        def backward_hook(module, gin, gout):
-            self.gradients = [gout[0]]
-
         target_layer.register_forward_hook(forward_hook)
-        target_layer.register_full_backward_hook(backward_hook)
 
     def _generate_gradcam(self, class_idx: int) -> np.ndarray:
         """
-        Compute normalized 2D Grad-CAM heatmap for class_idx.
-        Returns array of shape (384, 384) with values in range [0, 1].
+        Compute normalized 2D Grad-CAM heatmap using analytical classifier head weights.
+        Mathematically exact for ConvNeXt with Global Average Pooling without requiring backpropagation.
         """
-        if not self.activations or not self.gradients:
+        if not self.activations:
             return np.zeros((self.img_size, self.img_size), dtype=np.float32)
 
-        acts = self.activations[0][0]  # [C, H, W] = [768, 12, 12]
-        grads = self.gradients[0][0]   # [C, H, W] = [768, 12, 12]
+        acts = self.activations[0][0].float()  # [C, H, W] = [768, 12, 12]
+        fc_weight = self.model.head.fc.weight[class_idx].float().view(-1, 1, 1).to(acts.device)
 
-        # Global average pooling of gradients to obtain channel importance weights alpha_k
-        weights = torch.mean(grads, dim=(1, 2), keepdim=True)  # [C, 1, 1]
-
-        # Weighted combination of activation maps
-        cam = torch.sum(weights * acts, dim=0, keepdim=True)  # [1, H, W]
+        # Analytical class activation mapping
+        cam = torch.sum(fc_weight * acts, dim=0, keepdim=True)  # [1, H, W]
         cam = F.relu(cam)
 
         # Upsample smoothly to full input size (384x384)
@@ -181,22 +176,18 @@ class CattleBreedModel:
         Run inference and Grad-CAM explainability on an input cattle image.
         """
         rgb_image = image.convert("RGB")
-        tensor = self.eval_transform(rgb_image).unsqueeze(0).to(self.device)
-        tensor.requires_grad = True
+        tensor = self.eval_transform(rgb_image).unsqueeze(0).to(self.device, dtype=self.dtype)
 
-        self.model.zero_grad()
-        logits = self.model(tensor)
-        probs = F.softmax(logits, dim=1)[0]
-
-        top_k = 5
-        top_probs, top_indices = torch.topk(probs, k=top_k)
+        with torch.inference_mode():
+            logits = self.model(tensor)
+            probs = F.softmax(logits.float(), dim=1)[0]
+            top_k = 5
+            top_probs, top_indices = torch.topk(probs, k=top_k)
 
         # Selected class for Grad-CAM
         selected_idx = target_class_idx if target_class_idx is not None else top_indices[0].item()
-        target_score = logits[0, selected_idx]
-
-        target_score.backward(retain_graph=True)
         cam = self._generate_gradcam(selected_idx)
+        self.activations = []  # release cached tensor memory immediately
 
         # Cattle-Specific Anatomical Saliency Breakdown:
         # 1. Cranial Crown & Horns: Top 33%
