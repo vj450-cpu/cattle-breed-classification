@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PashuDrishti AI | 50 Indigenous Cattle Breeds & Grad-CAM Explainability</title>
+  <meta name="description" content="PashuDrishti AI: Indigenous & Dairy Cattle Breed Intelligence with 3D Anatomical Morphology, ConvNeXt Grad-CAM Explainability and Veterinary Diagnostics.">
+  
+  <!-- Modern Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Custom Stylesheet with Cache Busting v9.0 -->
+  <link rel="stylesheet" href="css/style.css?v=9.0">
+</head>
+<body style="background-color: #0c0704; color: #fffbeb;">
+  <!-- Background Layers: Zebu Artwork & Floating Golden Stardust -->
+  <div class="bg-cattle-artwork"></div>
+  <div class="bg-vignette"></div>
+  <canvas id="bgParticleCanvas" class="bg-particle-canvas" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: -1;"></canvas>
+
+  <!-- Ambient Glow Orbs -->
+  <div class="bg-orb orb-1"></div>
+  <div class="bg-orb orb-2"></div>
+  <div class="bg-orb orb-3"></div>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="logo-group">
+        <div class="logo-icon" id="logoIconInteractive" title="PashuDrishti AI Royal Indigenous Livestock Platform">
+          <i class="fa-solid fa-cow"></i>
+        </div>
+        <div>
+          <h1 class="logo-title">Pashu<span>Drishti</span> <span class="ai-badge-chip">AI</span></h1>
+          <p class="logo-tagline">Indigenous Cattle Phenotypic Intelligence & Grad-CAM Explainability</p>
+        </div>
+      </div>
+
+      <!-- Navigation Jump Links -->
+      <nav class="header-nav">
+        <button class="nav-tab-btn active" id="navTabClassifier" onclick="scrollToSection('classifierSection')">
+          <i class="fa-solid fa-microscope"></i> Vision Classifier
+        </button>
+        <button class="nav-tab-btn" id="navTab3D" onclick="scrollToSection('threedStudioSection')">
+          <i class="fa-solid fa-cube"></i> 3D Breed Studio
+        </button>
+      </nav>
+
+      <!-- Model Specs Badge -->
+      <div class="model-badge" id="modelBadge" title="Loaded model architecture">
+        <div class="pulse-indicator"></div>
+        <div class="badge-text">
+          <span class="badge-title">ConvNeXt-Small 384px</span>
+          <span class="badge-sub">50 Breeds • 82.6% Acc • PyTorch CUDA</span>
+        </div>
+      </div>
+
+      <!-- Header Actions -->
+      <div class="header-actions">
+        <button class="btn-icon" id="btnInfoModal" title="About Model & Explainability">
+          <i class="fa-solid fa-circle-question"></i>
+        </button>
+        <button class="btn-icon" id="btnSettingsModal" title="Gemini Vision API Settings">
+          <i class="fa-solid fa-sliders"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <main class="main-container" style="position: relative; z-index: 10;">
+
+    <!-- =====================================================================
+         Hero / Presets Ribbon (Instant Test Presets)
+         ===================================================================== -->
+    <section class="samples-ribbon-section" id="classifierSection">
+      <div class="ribbon-header">
+        <div class="ribbon-title">
+          <i class="fa-solid fa-sparkles"></i>
+          <span>Instant Test Presets</span>
+          <small>(Real test-set photos from indigenous cattle dataset)</small>
+        </div>
+        <span class="ribbon-hint">Click any cattle breed to test immediately</span>
+      </div>
+      <div class="samples-scroll" id="samplesContainer">
+        <!-- Injected via JavaScript -->
+        <div class="sample-skeleton"></div>
+        <div class="sample-skeleton"></div>
+        <div class="sample-skeleton"></div>
+        <div class="sample-skeleton"></div>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         Core Two-Column Workspace (Vision Classifier & Grad-CAM)
+         ===================================================================== -->
+    <div class="core-grid">
+      
+      <!-- Left Column: Input & Visual Inspection -->
+      <div class="grid-col left-col">
+        
+        <!-- Upload Card -->
+        <div class="glass-card upload-card" id="uploadZone">
+          <input type="file" id="fileInput" accept="image/*" class="file-hidden-input">
+          
+          <div class="upload-idle-state" id="uploadIdleState">
+            <div class="upload-icon-wrapper">
+              <i class="fa-solid fa-cloud-arrow-up"></i>
+            </div>
+            <h3 class="upload-prompt">Drop cattle image here, or <span>browse</span></h3>
+            <p class="upload-subtext">Supports high-res JPG, PNG, WEBP (Bicubic 384px tensor)</p>
+            <div class="upload-btn-row">
+              <button type="button" class="btn btn-primary" id="btnBrowse">
+                <i class="fa-solid fa-folder-open"></i> Select Photo
+              </button>
+              <button type="button" class="btn btn-secondary" id="btnCamera">
+                <i class="fa-solid fa-camera"></i> Live Camera
+              </button>
+            </div>
+          </div>
+
+          <!-- Active Visual Inspection Viewport -->
+          <div class="viewport-container" id="viewportContainer" style="display: none;">
+            
+            <!-- Scanning Line Animation during inference -->
+            <div class="scanner-laser" id="scannerLaser" style="display: none;"></div>
+
+            <!-- Interactive Split Comparison Viewport -->
+            <div class="comparison-stage" id="comparisonStage">
+              <!-- Background layer (Grad-CAM Blended Overlay) -->
+              <img id="overlayImage" class="stage-layer" alt="Grad-CAM Attention Heatmap">
+              
+              <!-- Foreground layer (Original Cropped Input) with clip-path slider -->
+              <div class="stage-clip" id="stageClip">
+                <img id="originalImage" class="stage-layer" alt="Original Specimen">
+              </div>
+
+              <!-- Draggable Divider Line & Handle -->
+              <div class="comparison-divider" id="comparisonDivider">
+                <div class="divider-handle">
+                  <i class="fa-solid fa-arrows-left-right"></i>
+                </div>
+              </div>
+
+              <!-- Badges on Image -->
+              <div class="view-tag tag-left">ORIGINAL</div>
+              <div class="view-tag tag-right">GRAD-CAM ATTENTION</div>
+            </div>
+
+            <!-- Visual Controls Toolbar -->
+            <div class="viewport-toolbar">
+              <div class="control-item">
+                <label for="colormapSelect"><i class="fa-solid fa-palette"></i> Colormap:</label>
+                <select id="colormapSelect" class="styled-select">
+                  <option value="jet" selected>Jet (Rainbow)</option>
+                  <option value="turbo">Turbo (High-Contrast)</option>
+                  <option value="inferno">Inferno (Thermal)</option>
+                  <option value="viridis">Viridis (Perceptual)</option>
+                  <option value="magma">Magma (Neon Glow)</option>
+                </select>
+              </div>
+
+              <div class="control-item slider-control">
+                <label for="alphaSlider"><i class="fa-solid fa-circle-half-stroke"></i> Blend:</label>
+                <input type="range" id="alphaSlider" min="0.1" max="0.9" step="0.05" value="0.52" class="styled-range">
+                <span id="alphaValue">52%</span>
+              </div>
+
+              <div class="control-item">
+                <button class="btn btn-sm btn-outline" id="btnTogglePureHeatmap" title="Switch between Blend and Pure Heatmap">
+                  <i class="fa-solid fa-fire"></i> Heatmap Only
+                </button>
+              </div>
+            </div>
+
+            <!-- Change Image Button -->
+            <div class="viewport-footer">
+              <button class="btn btn-sm btn-secondary" id="btnChangeImage">
+                <i class="fa-solid fa-rotate-left"></i> Upload Another Photo
+              </button>
+              <button class="btn btn-sm btn-accent" id="btnExportReport">
+                <i class="fa-solid fa-download"></i> Save Diagnostic Card
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Regional Cattle Attention Breakdown Card -->
+        <div class="glass-card attention-card" id="attentionCard" style="display: none;">
+          <div class="card-header">
+            <div class="card-title-group">
+              <i class="fa-solid fa-bullseye accent-icon"></i>
+              <h3>Anatomical Receptive Fields</h3>
+            </div>
+            <span class="badge-pill" id="dominantFocusBadge">Cranial & Horns</span>
+          </div>
+
+          <p class="attention-summary-text" id="attentionSummaryText">
+            The neural network localized discriminatory features on specific anatomical zones.
+          </p>
+
+          <div class="attention-meters">
+            <!-- Zone 1: Horns & Forehead -->
+            <div class="meter-group">
+              <div class="meter-labels">
+                <span class="meter-name"><i class="fa-solid fa-crown"></i> Horn Orientation & Cranial Forehead</span>
+                <span class="meter-val" id="valHorns">0%</span>
+              </div>
+              <div class="meter-track">
+                <div class="meter-fill fill-horns" id="barHorns" style="width: 0%;"></div>
+              </div>
+            </div>
+
+            <!-- Zone 2: Face & Muzzle -->
+            <div class="meter-group">
+              <div class="meter-labels">
+                <span class="meter-name"><i class="fa-solid fa-eye"></i> Facial Contours, Eyes & Muzzle</span>
+                <span class="meter-val" id="valFace">0%</span>
+              </div>
+              <div class="meter-track">
+                <div class="meter-fill fill-face" id="barFace" style="width: 0%;"></div>
+              </div>
+            </div>
+
+            <!-- Zone 3: Hump & Dewlap -->
+            <div class="meter-group">
+              <div class="meter-labels">
+                <span class="meter-name"><i class="fa-solid fa-shield-halved"></i> Thoracic Hump, Dewlap & Frame</span>
+                <span class="meter-val" id="valHump">0%</span>
+              </div>
+              <div class="meter-track">
+                <div class="meter-fill fill-hump" id="barHump" style="width: 0%;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Predictions & Livestock Profile -->
+      <div class="grid-col right-col">
+        
+        <!-- Welcome Prompt (Before Prediction) -->
+        <div class="glass-card placeholder-card" id="placeholderCard">
+          <div class="empty-art">
+            <i class="fa-solid fa-cow"></i>
+          </div>
+          <h3>Awaiting Specimen Analysis</h3>
+          <p>Upload a cattle photograph or click one of the preset test images above to see ConvNeXt classification and Grad-CAM visual explainability.</p>
+          <div class="feature-bullets">
+            <div class="bullet-item">
+              <i class="fa-solid fa-check"></i>
+              <span>Trained on 50 Indigenous & Dairy Cattle Breeds</span>
+            </div>
+            <div class="bullet-item">
+              <i class="fa-solid fa-check"></i>
+              <span>High-resolution Grad-CAM Visual Attention Heatmap</span>
+            </div>
+            <div class="bullet-item">
+              <i class="fa-solid fa-check"></i>
+              <span>Morphological Horn, Cranial & Dewlap Profiling</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Results Card (After Prediction) -->
+        <div class="glass-card result-card" id="resultCard" style="display: none;">
+          
+          <!-- Top Classification Hero -->
+          <div class="prediction-hero">
+            <div class="hero-subheading">PRIMARY PREDICTION</div>
+            <div class="hero-title-row">
+              <h2 class="breed-heading" id="primaryBreedName">Gir</h2>
+              <div class="confidence-badge" id="primaryConfidence">98.4%</div>
+            </div>
+            <div class="tag-row">
+              <span class="pill-tag pill-gold" id="breedPurpose"><i class="fa-solid fa-droplet"></i> Milch (A2 Milk)</span>
+              <span class="pill-tag pill-emerald" id="breedOrigin"><i class="fa-solid fa-location-dot"></i> Gujarat, India</span>
+              <span class="pill-tag pill-cyan" id="breedLifespan"><i class="fa-solid fa-hourglass-half"></i> 15-20 yrs</span>
+            </div>
+          </div>
+
+          <!-- Top-5 Probability Ranking with Interactive Click-to-Inspect -->
+          <div class="candidates-section">
+            <div class="section-title-row">
+              <h4><i class="fa-solid fa-layer-group"></i> Top 5 Model Candidates</h4>
+              <small class="hint-small">Click any candidate to recalculate Grad-CAM for that breed</small>
+            </div>
+            <div class="candidates-list" id="candidatesList">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- Differentiating Markers vs Lookalikes -->
+          <div class="lookalike-section" id="lookalikeSection">
+            <div class="section-title-row">
+              <h4><i class="fa-solid fa-code-compare"></i> Lookalike Breed Differentiation</h4>
+            </div>
+            <div class="lookalike-content" id="lookalikeContent">
+              <!-- Injected via JavaScript -->
+            </div>
+          </div>
+
+          <!-- Anatomical Traits Grid -->
+          <div class="traits-section">
+            <div class="section-title-row">
+              <h4><i class="fa-solid fa-dna"></i> Breed Phenotypic Standards</h4>
+            </div>
+            <div class="traits-grid" id="traitsGrid">
+              <!-- Injected via JavaScript -->
+            </div>
+          </div>
+
+          <!-- Multimodal Gemini Vision Appraisal Block -->
+          <div class="gemini-appraisal-card" id="geminiCard">
+            <div class="gemini-header">
+              <div class="gemini-title">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                <span>Veterinary Livestock Diagnostics</span>
+              </div>
+              <button class="btn btn-sm btn-gemini" id="btnRequestGemini">
+                <i class="fa-solid fa-stethoscope"></i> Request Expert Appraisal
+              </button>
+            </div>
+            <div class="gemini-body" id="geminiBody">
+              <p class="gemini-idle-text">
+                Run deep multimodal reasoning on horn curvature, cranial angles, and zebu heat-adaptation markers.
+              </p>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- =====================================================================
+         3D Sculpted Cattle Breed Studio Section (5 Breeds, 360 Drag, Scroll Zoom)
+         ===================================================================== -->
+    <section class="threed-studio-section" id="threedStudioSection" style="margin-top: 36px;">
+      <div class="glass-card threed-card">
+        
+        <!-- Studio Header -->
+        <div class="threed-header">
+          <div class="threed-title-group">
+            <div class="threed-icon-badge">
+              <i class="fa-solid fa-cubes"></i>
+            </div>
+            <div>
+              <h2 class="threed-title">Realistic 3D Cattle Breed Studio</h2>
+              <p class="threed-subtitle">Turn 360° in any angle, scroll to zoom in/out, and inspect authentic breed phenotypic morphology</p>
+            </div>
+          </div>
+
+          <!-- 5 Breed Selectors -->
+          <div class="threed-breed-tabs" id="threedBreedTabs">
+            <button class="breed-3d-btn active" data-breed="Gir" onclick="select3DBreed('Gir')">
+              <i class="fa-solid fa-crown"></i> Gir (Gyr)
+            </button>
+            <button class="breed-3d-btn" data-breed="Kangayam" onclick="select3DBreed('Kangayam')">
+              <i class="fa-solid fa-shield-halved"></i> Kangayam
+            </button>
+            <button class="breed-3d-btn" data-breed="Ongole" onclick="select3DBreed('Ongole')">
+              <i class="fa-solid fa-monument"></i> Ongole
+            </button>
+            <button class="breed-3d-btn" data-breed="Sahiwal" onclick="select3DBreed('Sahiwal')">
+              <i class="fa-solid fa-droplet"></i> Sahiwal
+            </button>
+            <button class="breed-3d-btn" data-breed="Hallikar" onclick="select3DBreed('Hallikar')">
+              <i class="fa-solid fa-bolt"></i> Hallikar
+            </button>
+          </div>
+        </div>
+
+        <!-- 3D Layout: Viewport + Live Anatomical Trait Profile -->
+        <div class="threed-layout">
+          
+          <!-- Viewport Box -->
+          <div class="threed-viewport-box">
+            <div id="cattle3dCanvasContainer"></div>
+
+            <!-- Overlaid Controls -->
+            <div class="threed-controls-overlay">
+              <div class="threed-controls-group">
+                <button class="threed-ctrl-btn" onclick="setCameraPreset('full')" title="Full Specimen View">
+                  <i class="fa-solid fa-expand"></i> Full View
+                </button>
+                <button class="threed-ctrl-btn" onclick="setCameraPreset('horns')" title="Zoom into Horns & Cranial Forehead">
+                  <i class="fa-solid fa-magnifying-glass-plus"></i> Horns & Crown
+                </button>
+                <button class="threed-ctrl-btn" onclick="setCameraPreset('hump')" title="Zoom into Thoracic Hump">
+                  <i class="fa-solid fa-mountain"></i> Thoracic Hump
+                </button>
+                <button class="threed-ctrl-btn" onclick="setCameraPreset('side')" title="3D Side Tilt">
+                  <i class="fa-solid fa-arrows-spin"></i> 3D Tilt
+                </button>
+                <button class="threed-ctrl-btn" id="toggleAutoRotate" onclick="toggleAutoRotate()" title="Toggle Auto Turntable">
+                  <i class="fa-solid fa-rotate"></i> Auto-Spin
+                </button>
+              </div>
+
+              <div class="threed-hint-pill">
+                <i class="fa-solid fa-computer-mouse"></i> Drag to turn 360° • Scroll wheel to zoom
+              </div>
+            </div>
+          </div>
+
+          <!-- Specimen Anatomical Traits Panel -->
+          <div class="threed-info-panel">
+            <div class="threed-breed-badge">
+              <h3 id="threedBreedName">Gir (Gyr)</h3>
+              <div class="threed-tag-row">
+                <span class="threed-tag" id="threedBreedPurpose">Milch (A2 Dairy)</span>
+                <span class="threed-tag" id="threedBreedOrigin">Kathiawar, Gujarat</span>
+              </div>
+            </div>
+
+            <div class="threed-traits-list" id="threedBreedTraits">
+              <div><strong>Horns:</strong> Backward-downward half-moon curl sweeping upwards</div>
+              <div><strong>Forehead:</strong> Prominently convex bulging forehead shield</div>
+              <div><strong>Hump:</strong> Pronounced rounded thoracic hump</div>
+              <div><strong>Dewlap:</strong> Voluminous pendulous skin folds</div>
+            </div>
+
+            <div style="margin-top: auto; padding-top: 10px; border-top: 1px solid var(--border-glass);">
+              <small style="color: var(--gold-400); font-size: 11px;">
+                <i class="fa-solid fa-circle-info"></i> Modeled with authentic zebu cranial convexity, horn angles, and dewlap ratios.
+              </small>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Interactive Cattle Chewing Widget (Corner) -->
+  <div class="cow-mascot-container" id="cowMascotContainer" style="position: fixed; bottom: 20px; right: 24px; z-index: 99; width: 92px; height: 92px; max-width: 92px; max-height: 92px;"></div>
+
+  <!-- Live Camera Modal -->
+  <div class="modal-backdrop" id="cameraModal" style="display: none;">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-camera"></i> Live Cattle Specimen Capture</h3>
+        <button class="modal-close" id="btnCloseCamera">&times;</button>
+      </div>
+      <div class="camera-stream-wrapper">
+        <video id="cameraVideo" autoplay playsinline style="width: 100%; border-radius: var(--radius-md);"></video>
+        <canvas id="cameraCanvas" style="display: none;"></canvas>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="btnCancelCamera">Cancel</button>
+        <button class="btn btn-primary" id="btnSnapPhoto">
+          <i class="fa-solid fa-camera-retro"></i> Capture Specimen
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal (Gemini API Key) -->
+  <div class="modal-backdrop" id="settingsModal" style="display: none;">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-sliders"></i> Engine Configuration</h3>
+        <button class="modal-close" id="btnCloseSettings">&times;</button>
+      </div>
+      <div class="modal-content">
+        <div class="form-group">
+          <label for="inputApiKey">Google Gemini API Key (Optional):</label>
+          <input type="password" id="inputApiKey" placeholder="AIzaSy..." class="styled-input">
+          <small class="form-hint">Used for live multimodal veterinary appraisal. Leave blank to use built-in local livestock diagnostic engine.</small>
+        </div>
+        <div class="form-group">
+          <label for="inputBackendUrl">Cloud / Local Backend API URL (Optional):</label>
+          <input type="text" id="inputBackendUrl" placeholder="https://your-service.onrender.com or http://localhost:8000" class="styled-input">
+          <small class="form-hint">Connect your deployed Render or local Python backend for live custom image inference.</small>
+        </div>
+        <div class="form-group">
+          <label>Engine & Model Architecture:</label>
+          <div class="info-block">
+            <code>ConvNeXt-Small @ 384x384 (best_cattle_model.pth)</code>
+            <div>50 Indigenous Breeds • 82.62% Val Accuracy • Grad-CAM Explainability</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" id="btnSaveSettings">Save Preferences</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Info Modal -->
+  <div class="modal-backdrop" id="infoModal" style="display: none;">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-circle-info"></i> About PashuDrishti AI Explainability</h3>
+        <button class="modal-close" id="btnCloseInfo">&times;</button>
+      </div>
+      <div class="modal-content info-content">
+        <h4>What is Grad-CAM?</h4>
+        <p><strong>Gradient-weighted Class Activation Mapping (Grad-CAM)</strong> computes the gradients of the target breed classification score with respect to the final convolutional feature maps in Stage 4 of ConvNeXt. This reveals the exact receptive fields and anatomical regions (e.g. domed forehead of Gir, lyre horns of Kankrej, or compact dwarf frame of Punganur) that the neural network relied upon.</p>
+        
+        <h4>3D Breed Studio & Morphological Inspection</h4>
+        <p>Explore authentic 3D models of 5 key indigenous cattle breeds (Gir, Kangayam, Ongole, Sahiwal, Hallikar). Turn 360 degrees and zoom in to inspect the unique horn angles, cranial crowns, and thoracic humps.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="btnDismissInfo">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Three.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <!-- Custom Scripts with Cache Busting v9.0 -->
+  <script src="js/cattle_3d.js?v=9.0"></script>
+  <script src="js/mascot.js?v=9.0"></script>
+  <script src="js/bg_animations.js?v=9.0"></script>
+  <script src="js/app.js?v=9.0"></script>
+
+  <!-- Inline Helper for 3D Studio & Mascot Init -->
+  <script>
+    function scrollToSection(sectionId) {
+      const el = document.getElementById(sectionId);
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function select3DBreed(breedName) {
+      if (window.cattleStudio) {
+        window.cattleStudio.loadBreed(breedName);
+      }
+      if (window.cowMascot) {
+        window.cowMascot.say(`Inspecting 3D ${breedName}! Check out those unique horns and thoracic hump! 🐂`);
+      }
+    }
+
+    function toggleAutoRotate() {
+      if (window.cattleStudio) {
+        window.cattleStudio.toggleAutoRotation();
+      }
+    }
+
+    function setCameraPreset(preset) {
+      if (window.cattleStudio) {
+        window.cattleStudio.setCameraAngle(preset);
+      }
+    }
+
+    // Auto-initialize when window loads
+    window.addEventListener("DOMContentLoaded", () => {
+      if (typeof initAmbientBackground === "function") initAmbientBackground();
+      if (typeof initCowMascot === "function") initCowMascot();
+      if (typeof initCattle3D === "function") initCattle3D();
+    });
+  </script>
+</body>
+</html>

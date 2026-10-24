@@ -479,10 +479,15 @@
           <small class="form-hint">Used for live multimodal veterinary appraisal. Leave blank to use built-in local livestock diagnostic engine.</small>
         </div>
         <div class="form-group">
-          <label>Active Local Weights:</label>
+          <label for="inputBackendUrl">Cloud / Local Backend API URL (Optional):</label>
+          <input type="text" id="inputBackendUrl" placeholder="https://your-service.onrender.com or http://localhost:8000" class="styled-input">
+          <small class="form-hint">Connect your deployed Render or local Python backend for live custom image inference.</small>
+        </div>
+        <div class="form-group">
+          <label>Engine & Model Architecture:</label>
           <div class="info-block">
-            <code>C:\Users\Vijay\best_cattle_model.pth</code>
-            <div>ConvNeXt-Small @ 384x384 • 50 Classes • 82.62% Val Accuracy</div>
+            <code>ConvNeXt-Small @ 384x384 (best_cattle_model.pth)</code>
+            <div>50 Indigenous Breeds • 82.62% Val Accuracy • Grad-CAM Explainability</div>
           </div>
         </div>
       </div>
