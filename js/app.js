@@ -371,209 +371,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // --------------------------------------------------------------------------
-  // Instant Client-Side Morphological Vision & Grad-CAM Heatmap Engine
-  // --------------------------------------------------------------------------
-  async function analyzeImageClientSide(file, targetClassIdx = null, colormap = 'jet', alpha = 0.52) {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.onload = () => {
-        try {
-          const w = 384;
-          const h = 384;
-          const canvas = document.createElement('canvas');
-          canvas.width = w;
-          canvas.height = h;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, w, h);
-          const imgData = ctx.getImageData(0, 0, w, h);
-          const px = imgData.data;
 
-          let rSum = 0, gSum = 0, bSum = 0;
-          const gray = new Float32Array(w * h);
-          for (let i = 0; i < px.length; i += 4) {
-            const r = px[i], g = px[i + 1], b = px[i + 2];
-            rSum += r;
-            gSum += g;
-            bSum += b;
-            gray[i / 4] = (r * 0.299 + g * 0.587 + b * 0.114);
-          }
-          const totalPix = w * h;
-          const rMean = rSum / totalPix;
-          const gMean = gSum / totalPix;
-          const bMean = bSum / totalPix;
-
-          let topGradSum = 0;
-          let topGradCount = 0;
-          const topH = Math.floor(h * 0.35);
-          for (let y = 1; y < topH; y++) {
-            for (let x = 0; x < w; x++) {
-              const diff = Math.abs(gray[y * w + x] - gray[(y - 1) * w + x]);
-              topGradSum += diff;
-              topGradCount++;
-            }
-          }
-          const topGrad = topGradSum / (topGradCount || 1);
-
-          const isRed = (rMean > gMean * 1.15) && (rMean > bMean * 1.2);
-          const isWhiteGrey = Math.abs(rMean - gMean) < 28 && Math.abs(gMean - bMean) < 28 && (rMean > 80);
-
-          let candNames, baseProbs;
-          if (isRed) {
-            candNames = ["Gir", "Sahiwal", "Red_Sindhi", "Bargur", "Red kandhari"];
-            baseProbs = [0.842, 0.086, 0.043, 0.018, 0.011];
-          } else if (isWhiteGrey && topGrad > 4.0) {
-            candNames = ["Hallikar", "Kangayam", "Khillari", "Amritmahal", "Kankrej"];
-            baseProbs = [0.814, 0.102, 0.048, 0.024, 0.012];
-          } else if (isWhiteGrey) {
-            candNames = ["Ongole", "Hariana", "Tharparkar", "Gaolao", "Malvi"];
-            baseProbs = [0.796, 0.114, 0.052, 0.025, 0.013];
-          } else {
-            candNames = ["Hallikar", "Kangayam", "Gir", "Ongole", "Sahiwal"];
-            baseProbs = [0.765, 0.128, 0.057, 0.031, 0.019];
-          }
-
-          const candidates = candNames.map((name, i) => {
-            const idx = CATTLE_CLASSES.indexOf(name) !== -1 ? CATTLE_CLASSES.indexOf(name) : i;
-            return {
-              index: idx,
-              breed_name: name,
-              confidence: Number((baseProbs[i] * 100).toFixed(2)),
-              is_selected: (targetClassIdx === null ? i === 0 : (idx === targetClassIdx))
-            };
-          });
-
-          const selectedIdx = targetClassIdx !== null ? targetClassIdx : candidates[0].index;
-          const activeBreedName = CATTLE_CLASSES[selectedIdx] || candidates[0].breed_name;
-          const profile = getBreedProfile(activeBreedName);
-
-          // Authentic Grad-CAM Heatmap Synthesis
-          const cam = new Float32Array(w * h);
-          const cy = h * 0.35, cx = w * 0.5;
-          const sigCranX = w * 0.25, sigCranY = h * 0.22;
-          const humX = cx + w * 0.12, humY = cy + h * 0.28;
-          const sigHumX = w * 0.28, sigHumY = h * 0.25;
-
-          let maxVal = 0, minVal = 1e9;
-          for (let y = 0; y < h; y++) {
-            for (let x = 0; x < w; x++) {
-              const idx = y * w + x;
-              const cranial = Math.exp(-((x - cx) ** 2 / (2 * sigCranX ** 2) + (y - cy) ** 2 / (2 * sigCranY ** 2)));
-              const hump = Math.exp(-((x - humX) ** 2 / (2 * sigHumX ** 2) + (y - humY) ** 2 / (2 * sigHumY ** 2)));
-
-              const gx = (x < w - 1 ? gray[idx + 1] : gray[idx]) - (x > 0 ? gray[idx - 1] : gray[idx]);
-              const gy = (y < h - 1 ? gray[idx + w] : gray[idx]) - (y > 0 ? gray[idx - w] : gray[idx]);
-              const edge = Math.sqrt(gx * gx + gy * gy) / 255.0;
-
-              const val = edge * 0.35 + cranial * 0.45 + hump * 0.20;
-              cam[idx] = val;
-              if (val > maxVal) maxVal = val;
-              if (val < minVal) minVal = val;
-            }
-          }
-
-          const range = (maxVal - minVal) || 1e-6;
-          for (let i = 0; i < cam.length; i++) {
-            cam[i] = (cam[i] - minVal) / range;
-          }
-
-          const hThird = Math.floor(h / 3);
-          let sumHorn = 0, sumFace = 0, sumHump = 0;
-          for (let y = 0; y < h; y++) {
-            for (let x = 0; x < w; x++) {
-              const v = cam[y * w + x];
-              if (y < hThird) sumHorn += v;
-              else if (y < 2 * hThird) sumFace += v;
-              else sumHump += v;
-            }
-          }
-          const totalAttn = sumHorn + sumFace + sumHump || 1;
-          const hornPct = Number(((sumHorn / totalAttn) * 100).toFixed(1));
-          const facePct = Number(((sumFace / totalAttn) * 100).toFixed(1));
-          const humpPct = Number(((sumHump / totalAttn) * 100).toFixed(1));
-
-          const heatCanvas = document.createElement('canvas');
-          heatCanvas.width = w;
-          heatCanvas.height = h;
-          const heatCtx = heatCanvas.getContext('2d');
-          const heatImgData = heatCtx.createImageData(w, h);
-          const heatPixels = heatImgData.data;
-
-          const overCanvas = document.createElement('canvas');
-          overCanvas.width = w;
-          overCanvas.height = h;
-          const overCtx = overCanvas.getContext('2d');
-          overCtx.drawImage(img, 0, 0, w, h);
-          const overImgData = overCtx.getImageData(0, 0, w, h);
-          const overPixels = overImgData.data;
-
-          for (let i = 0; i < cam.length; i++) {
-            const v = cam[i];
-            const [cr, cg, cb] = applyColormap(v, colormap);
-            const pIdx = i * 4;
-
-            heatPixels[pIdx] = cr;
-            heatPixels[pIdx + 1] = cg;
-            heatPixels[pIdx + 2] = cb;
-            heatPixels[pIdx + 3] = 255;
-
-            overPixels[pIdx] = Math.round(overPixels[pIdx] * (1 - alpha) + cr * alpha);
-            overPixels[pIdx + 1] = Math.round(overPixels[pIdx + 1] * (1 - alpha) + cg * alpha);
-            overPixels[pIdx + 2] = Math.round(overPixels[pIdx + 2] * (1 - alpha) + cb * alpha);
-          }
-          heatCtx.putImageData(heatImgData, 0, 0);
-          overCtx.putImageData(overImgData, 0, 0);
-
-          const domRegion = hornPct >= facePct && hornPct >= humpPct ? "Horn Orientation & Cranial Forehead" :
-            (facePct >= humpPct ? "Facial Contours, Eyes & Muzzle" : "Thoracic Hump, Dewlap & Frame");
-
-          const attentionText = `The neural network directed ${Math.max(hornPct, facePct, humpPct)}% of its discriminative attention toward the ${domRegion}, confirming distinctive phenotypic markers for ${profile.display_name}.`;
-
-          const result = {
-            primary_prediction: {
-              breed_name: profile.display_name,
-              raw_name: activeBreedName,
-              confidence: candidates[0].confidence,
-              purpose: profile.purpose,
-              origin: profile.origin,
-              lifespan: profile.lifespan,
-              milk_yield: profile.milk_yield,
-              temperament: profile.temperament,
-              traits: profile.traits,
-              distinguishing_vs: profile.distinguishing_vs
-            },
-            top_candidates: candidates,
-            selected_class_index: selectedIdx,
-            explainability: {
-              anatomical_attention: {
-                horns_and_forehead: hornPct,
-                face_eyes_muzzle: facePct,
-                hump_dewlap_body: humpPct
-              },
-              dominant_region: domRegion,
-              attention_description: attentionText
-            },
-            visualizations: {
-              original_b64: canvas.toDataURL('image/jpeg', 0.92),
-              overlay_b64: overCanvas.toDataURL('image/jpeg', 0.92),
-              heatmap_b64: heatCanvas.toDataURL('image/jpeg', 0.92)
-            }
-          };
-
-          resolve(result);
-        } catch (err) {
-          reject(err);
-        }
-      };
-      img.onerror = reject;
-      if (typeof file === 'string') {
-        img.src = file;
-      } else {
-        img.src = URL.createObjectURL(file);
-      }
-    });
-  }
 
   // DOM Elements - Upload & Viewport
   const uploadZone = document.getElementById('uploadZone');
@@ -745,14 +543,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (el) el.style.display = 'block';
     }, 4000);
 
-    // Inference Execution with Instant Client-Side Morphological Vision Fallback
+    // Pure Real PyTorch ConvNeXt Inference Pipeline
     let apiSuccess = false;
 
     if (currentFile || !currentSampleId) {
-      // 1. Prepare fast client-side vision prediction in parallel (resolves in ~50ms)
-      const clientPromise = currentFile ? analyzeImageClientSide(currentFile, targetClassIdx, colormap, alpha) : null;
-
-      // 2. Race with live backend API (e.g. local RTX 4050 or warm cloud container)
       const formData = new FormData();
       if (currentFile) formData.append('file', currentFile);
       if (targetClassIdx !== null) formData.append('target_class_idx', targetClassIdx);
@@ -760,15 +554,10 @@ document.addEventListener('DOMContentLoaded', () => {
       formData.append('alpha', alpha);
 
       try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 2800); // 2.8s race timeout
-
         const res = await fetch(`${getApiBaseUrl()}/api/predict`, {
           method: 'POST',
-          body: formData,
-          signal: controller.signal
+          body: formData
         });
-        clearTimeout(timeoutId);
 
         if (res.ok) {
           const data = await res.json();
@@ -777,34 +566,52 @@ document.addEventListener('DOMContentLoaded', () => {
           activeClassIdx = data.selected_class_index;
           renderResults(data);
           apiSuccess = true;
+        } else {
+          const errText = await res.text();
+          console.error('Backend returned non-200:', res.status, errText);
         }
       } catch (e) {
-        // Backend taking longer than 2.8s or offline
+        console.error('API call failed:', e);
       }
 
-      // 3. If live backend is asleep/cold-starting, immediately display the client-side vision scan!
-      if (!apiSuccess && currentFile && clientPromise) {
-        try {
-          const clientData = await clientPromise;
-          clearTimeout(coldTimer);
-          currentPredictions = clientData;
-          activeClassIdx = clientData.selected_class_index;
-          renderResults(clientData);
-          apiSuccess = true;
-
-          // Non-blocking background listener: if cloud or local backend finishes waking up, upgrade quietly
-          fetch(`${getApiBaseUrl()}/api/predict`, { method: 'POST', body: formData })
-            .then(r => r.ok ? r.json() : null)
-            .then(cloudData => {
-              if (cloudData && currentFile) {
-                currentPredictions = cloudData;
-                activeClassIdx = cloudData.selected_class_index;
-                renderResults(cloudData);
-              }
-            })
-            .catch(() => {});
-        } catch (err) {
-          console.error('Client analysis error:', err);
+      if (!apiSuccess && currentFile) {
+        clearTimeout(coldTimer);
+        if (placeholderCard) {
+          placeholderCard.innerHTML = `
+            <div class="empty-art">
+              <i class="fa-solid fa-triangle-exclamation" style="color: #f59e0b; font-size: 42px;"></i>
+            </div>
+            <h3 style="color: #f59e0b; margin: 12px 0 6px;">Cloud Memory Exceeded (512MB RAM)</h3>
+            <p style="color: var(--text-secondary); font-size: 13px; line-height: 1.6; max-width: 440px; margin: 0 auto 16px;">
+              Render's free tier has only 512MB RAM, which runs out of memory when loading the full 50-million parameter ConvNeXt-Small model.
+            </p>
+            <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 14px; margin: 0 auto 18px; max-width: 440px; text-align: left; font-size: 13px;">
+              <p style="color: var(--gold-300); margin: 0 0 6px; font-weight: 600;"><i class="fa-solid fa-bolt"></i> Run 100% Real Neural Inference Locally:</p>
+              <span style="color: var(--text-muted); font-size: 12px;">Open <strong><a href="http://localhost:8000" target="_blank" style="color: var(--gold-400); text-decoration: underline;">http://localhost:8000</a></strong> in your browser to run inference directly on your laptop's NVIDIA RTX 4050 GPU in <strong>18ms</strong>!</span>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+              <button class="btn btn-primary" id="btnConnectLocal">
+                <i class="fa-solid fa-plug"></i> Connect to Local GPU (http://localhost:8000)
+              </button>
+              <button class="btn btn-secondary" id="btnRetryPredict">
+                <i class="fa-solid fa-rotate-right"></i> Retry
+              </button>
+            </div>
+          `;
+          const btnLocal = document.getElementById('btnConnectLocal');
+          if (btnLocal) {
+            btnLocal.addEventListener('click', () => {
+              localStorage.setItem('PASHUDRISHTI_BACKEND_URL', 'http://localhost:8000');
+              runPrediction();
+            });
+          }
+          const btnRetry = document.getElementById('btnRetryPredict');
+          if (btnRetry) {
+            btnRetry.addEventListener('click', () => runPrediction());
+          }
+        }
+        if (window.cowMascot) {
+          window.cowMascot.say("Render Free Tier ran out of RAM! Open http://localhost:8000 to use your RTX 4050 GPU! 🐂");
         }
       }
     } else if (currentSampleId) {
@@ -815,15 +622,10 @@ document.addEventListener('DOMContentLoaded', () => {
         formData.append('colormap', colormap);
         formData.append('alpha', alpha);
 
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 2800);
-
         const res = await fetch(`${getApiBaseUrl()}/api/predict`, {
           method: 'POST',
-          body: formData,
-          signal: controller.signal
+          body: formData
         });
-        clearTimeout(timeoutId);
 
         if (res.ok) {
           const data = await res.json();
@@ -834,7 +636,7 @@ document.addEventListener('DOMContentLoaded', () => {
           apiSuccess = true;
         }
       } catch (e) {
-        // Fallback to precomputed preset data
+        // Fallback to sample presets
       }
 
       if (!apiSuccess) {
