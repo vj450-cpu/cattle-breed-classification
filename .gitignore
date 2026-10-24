@@ -1,11 +1,13 @@
-# Model checkpoints (large files > 100MB)
-*.pth
+# Model checkpoints
 *.pt
 *.bin
 *.onnx
-weights/
 best_cattle_model.pth
 best_single_cattle_model.pth
+
+# Whitelist production inference weights (<100MB)
+!app/weights/
+!app/weights/best_cattle_model.pth
 
 # Python
 __pycache__/

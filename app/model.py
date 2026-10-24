@@ -19,17 +19,19 @@ import timm
 from app.breed_data import CATTLE_CLASSES, get_cattle_profile
 
 def get_default_weights_path() -> str:
+    app_dir = os.path.dirname(os.path.abspath(__file__))
     candidates = [
         os.environ.get("CATTLE_MODEL_PATH"),
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "weights", "best_cattle_model.pth"),
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "best_cattle_model.pth"),
+        os.path.join(app_dir, "weights", "best_cattle_model.pth"),
+        os.path.join(app_dir, "..", "weights", "best_cattle_model.pth"),
+        os.path.join(app_dir, "..", "best_cattle_model.pth"),
         r"C:\Users\Vijay\best_cattle_model.pth",
         "best_cattle_model.pth"
     ]
     for c in candidates:
         if c and os.path.exists(c):
             return c
-    return os.environ.get("CATTLE_MODEL_PATH", r"C:\Users\Vijay\best_cattle_model.pth")
+    return os.path.join(app_dir, "weights", "best_cattle_model.pth")
 
 MODEL_WEIGHTS_PATH = get_default_weights_path()
 
