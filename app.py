@@ -10,6 +10,17 @@ from PIL import Image
 import gradio as gr
 import torch
 
+try:
+    import spaces
+except ImportError:
+    class _MockSpaces:
+        @staticmethod
+        def GPU(fn=None, duration=60):
+            if fn is None:
+                return lambda f: f
+            return fn
+    spaces = _MockSpaces()
+
 from app.model import CattleBreedModel
 from app.breed_data import CATTLE_CLASSES, get_cattle_profile
 
@@ -46,6 +57,7 @@ def b64_to_pil(b64_str: str) -> Image.Image:
     data = base64.b64decode(b64_str)
     return Image.open(io.BytesIO(data))
 
+@spaces.GPU
 def predict_cattle_breed(image, colormap="jet", blend_alpha=0.52):
     if image is None:
         return {}, None, None, "", ""
