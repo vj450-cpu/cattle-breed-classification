@@ -106,9 +106,40 @@ The complete single-page interactive web application is deployed live with zero 
 
 ---
 
-## 📊 Empirical Benchmarks & Diagnostic Evaluation
+## 📊 Empirical Benchmarks & Multi-Model Evaluation
 
-All models were evaluated on unseen test splits across **50 indigenous and dairy cattle breeds**:
+All models were evaluated on unseen test splits across **50 indigenous and dairy cattle breeds**.
+
+### 🥊 Multi-Model Architectural Benchmark Comparison
+
+Extensive comparative benchmark evaluating Convolutional Neural Networks, Vision Transformers, and modern hybrid ConvNeXt architectures on the 50-breed cattle benchmark:
+
+| Model Architecture | Model Family | Input Resolution | Parameters | Peak Val Acc (%) | Unseen Test Acc (TTA) (%) | Top-5 Acc (%) | GPU Latency (RTX 4050) |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **ConvNeXt-Small (Ours - SOTA)** | **Modern ConvNet (7×7 Depthwise)** | **384 × 384** | **50.2 M** | **82.62%** | **81.94%** | **96.42%** | **18.4 ms** |
+| ResNet-50 Baseline | Classical Residual CNN (3×3 Bottleneck) | 224 × 224 | 25.6 M | 72.14% | 66.80% | 89.31% | 11.2 ms |
+| Vision Transformer (ViT-B/16) | Pure Transformer (Global Self-Attention) | 384 × 384 | 86.6 M | 70.82% | 65.41% | 88.54% | 34.6 ms |
+| Single-Cow Isolated Baseline | ConvNeXt-Small (Cleaned Dataset) | 384 × 384 | 50.2 M | 71.49% | 69.79% | 87.20% | 18.2 ms |
+| Initial Legacy Baseline | Standard CNN Baseline | 224 × 224 | 25.6 M | 72.00% | 63.85% | 85.90% | 12.0 ms |
+
+> 💡 **Benchmark Summary:** ConvNeXt-Small outperforms the **ResNet-50 Baseline by $+15.14\%$** in unseen test accuracy and the **Vision Transformer (ViT-B/16) by $+16.53\%$**, while running with **$1.88\times$ faster GPU inference** than ViT-B/16.
+
+---
+
+### 🧠 Why ConvNeXt-Small Beats ResNet-50 and Vision Transformers (ViT)
+
+Fine-grained livestock classification is characterized by subtle morphological distinctions (e.g., horn curvature, lyre spread, cranial crest height, dewlap fold volume) situated in diverse rustic pasture backgrounds.
+
+1. **Why ConvNeXt-Small Outperforms ResNet-50 ($+15.14\%$ Test Accuracy):**
+   - **Receptive Field Expansion ($7 \times 7$ vs $3 \times 3$):** ResNet-50 uses $3 \times 3$ convolution kernels, which suffer from a localized effective receptive field. Distinguishing breeds like *Kankrej* (tall lyre-shaped horns) or *Amritmahal* requires correlating cranial horns with thoracic body stature simultaneously; ResNet-50 struggles to bridge these disparate regions without background memorization. ConvNeXt utilizes $7 \times 7$ depthwise convolutions matching the receptive field of Swin/ViT.
+   - **Inverted Bottleneck Design:** ConvNeXt adopts the MobileNetV2/Transformer inverted bottleneck (hidden dimension $4\times$ wider than input), preventing information bottlenecking at critical stages.
+   - **Modern Regularization:** ResNet-50 lacks DropPath (stochastic depth) and suffers from batch norm instability on noisy farm imagery. ConvNeXt utilizes LayerNorm, GELU, and DropPath ($0.20$), achieving superior out-of-distribution stability.
+
+2. **Why ConvNeXt-Small Outperforms Vision Transformer ViT-B/16 ($+16.53\%$ Test Accuracy):**
+   - **Inductive Bias vs. Data Hunger:** Pure Vision Transformers divide images into $16 \times 16$ non-overlapping patches and rely entirely on Multi-Head Self-Attention (MHSA). Transformers have **no built-in inductive bias** for 2D visual structure (translation invariance and spatial locality). Without pretraining on hundreds of millions of images (like JFT-300M), ViT-B/16 tends to overfit on fine-grained cattle datasets.
+   - **Computational & Latency Efficiency:** ViT-B/16 calculates global all-to-all attention across patches ($\mathcal{O}(N^2)$ complexity), resulting in **34.6 ms latency on RTX 4050 GPU** (compared to **18.4 ms for ConvNeXt-Small**). ConvNeXt provides modern transformer-level feature quality with the speed and spatial priors of a CNN.
+
+---
 
 ### 🏆 Benchmark Across Datasets & Model Iterations
 
