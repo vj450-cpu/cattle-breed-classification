@@ -1,5 +1,17 @@
+---
+title: PashuDrishti AI Cattle Vision
+emoji: 🐂
+colorFrom: yellow
+colorTo: amber
+sdk: docker
+app_port: 7860
+pinned: false
+license: mit
+---
+
 # PashuDrishti AI: Indigenous Cattle Breed Vision & Explainability Platform 🐂🔬
 
+[![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces%20Live%20(16GB%20RAM)-yellow.svg)](https://huggingface.co/spaces/vj450-cpu/pashudrishti-cattle-vision)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg?logo=python&logoColor=white)](https://www.python.org/)
 [![PyTorch 2.1+](https://img.shields.io/badge/PyTorch-2.1%2B-EE4C2C.svg?logo=pytorch&logoColor=white)](https://pytorch.org/)
 [![ConvNeXt-Small](https://img.shields.io/badge/Architecture-ConvNeXt--Small-success.svg)](https://arxiv.org/abs/2201.03545)
@@ -7,18 +19,20 @@
 [![Three.js](https://img.shields.io/badge/3D%20Studio-Three.js-black.svg?logo=three.js&logoColor=white)](https://threejs.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![GitHub Pages Live](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-brightgreen.svg?logo=github&logoColor=white)](https://vj450-cpu.github.io/cattle-breed-classification/)
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/vj450-cpu/cattle-breed-classification)
 
 > **A State-of-the-Art Deep Learning & Computer Vision System for 50 Indigenous & Dairy Cattle Breeds**, powered by **ConvNeXt-Small (384×384 bicubic)**, **Grad-CAM visual receptive field heatmaps**, **Tri-Zone anatomical saliency diagnostics**, and an **interactive 3D livestock morphology studio**.
 
 ---
 
-## 🌐 Live Web Deployments
+## 🌐 Submission URLs & Live Web Deployments
 
-- 📱 **Interactive Web App (GitHub Pages)**: [https://vj450-cpu.github.io/cattle-breed-classification/](https://vj450-cpu.github.io/cattle-breed-classification/)
-- ☁️ **Full-Stack Cloud Backend & Web Service (Render)**: Click the **Deploy to Render** button above or use Blueprint `render.yaml` for a permanent 24/7 cloud container URL (e.g. `https://pashudrishti-cattle-vision.onrender.com`).
+- 🚀 **Live Production Web Application (`G084_Website.url`)**: [https://huggingface.co/spaces/vj450-cpu/pashudrishti-cattle-vision](https://huggingface.co/spaces/vj450-cpu/pashudrishti-cattle-vision) *(Runs with 16 GB RAM + PyTorch ConvNeXt on Hugging Face Spaces)*
+- 💻 **Official Source Repository (`G084_Github.url`)**: [https://github.com/vj450-cpu/cattle-breed-classification](https://github.com/vj450-cpu/cattle-breed-classification)
+- 📱 **Static Visual Demo (GitHub Pages)**: [https://vj450-cpu.github.io/cattle-breed-classification/](https://vj450-cpu.github.io/cattle-breed-classification/)
+- ☁️ **Alternative Cloud Container (Render)**: [https://pashudrishti-cattle-vision.onrender.com](https://pashudrishti-cattle-vision.onrender.com)
 
-The complete single-page interactive web application is deployed live with zero setup required. Explore the 8 high-resolution bundled test presets (Gir, Kangayam, Ongole, Sahiwal, Hallikar, Punganur, Vechur, Kankrej), peel back the split-comparison slider to reveal Grad-CAM attention heatmaps, inspect Top-5 competing candidate breeds, and rotate the 3D anatomical cattle model.
+The complete interactive web application is packaged and deployed with zero setup required. Explore the 8 high-resolution bundled test presets (Gir, Kangayam, Ongole, Sahiwal, Hallikar, Punganur, Vechur, Kankrej), peel back the split-comparison slider to reveal Grad-CAM attention heatmaps, inspect Top-5 competing candidate breeds, and rotate the 3D anatomical cattle model.
+
 
 ---
 
