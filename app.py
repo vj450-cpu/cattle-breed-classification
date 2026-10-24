@@ -16,12 +16,27 @@ from app.breed_data import CATTLE_CLASSES, get_cattle_profile
 # Global model instance
 _model = None
 
+def ensure_weights_file():
+    weights_path = os.path.join(os.path.dirname(__file__), "app", "weights", "best_cattle_model.pth")
+    if os.path.exists(weights_path) and os.path.getsize(weights_path) > 10 * 1024 * 1024:
+        return weights_path
+
+    dev_path = r"C:\Users\Vijay\best_cattle_model.pth"
+    if os.path.exists(dev_path):
+        return dev_path
+
+    url = "https://github.com/vj450-cpu/cattle-breed-classification/raw/main/app/weights/best_cattle_model.pth"
+    print(f"[Space Startup] Fetching 94.5MB ConvNeXt-Small weights from {url}...")
+    os.makedirs(os.path.dirname(weights_path), exist_ok=True)
+    import urllib.request
+    urllib.request.urlretrieve(url, weights_path)
+    print(f"[Space Startup] Weights downloaded successfully: {os.path.getsize(weights_path)} bytes")
+    return weights_path
+
 def get_model():
     global _model
     if _model is None:
-        weights_path = os.path.join(os.path.dirname(__file__), "app", "weights", "best_cattle_model.pth")
-        if not os.path.exists(weights_path):
-            weights_path = r"C:\Users\Vijay\best_cattle_model.pth"
+        weights_path = ensure_weights_file()
         _model = CattleBreedModel(weights_path=weights_path)
     return _model
 

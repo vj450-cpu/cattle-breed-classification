@@ -29,9 +29,23 @@ def get_default_weights_path() -> str:
         "best_cattle_model.pth"
     ]
     for c in candidates:
-        if c and os.path.exists(c):
+        if c and os.path.exists(c) and os.path.getsize(c) > 10 * 1024 * 1024:
             return c
-    return os.path.join(app_dir, "weights", "best_cattle_model.pth")
+    
+    # Auto-fetch if weights are missing or a small LFS pointer
+    target = os.path.join(app_dir, "weights", "best_cattle_model.pth")
+    if not os.path.exists(target) or os.path.getsize(target) < 10 * 1024 * 1024:
+        try:
+            os.makedirs(os.path.dirname(target), exist_ok=True)
+            url = "https://github.com/vj450-cpu/cattle-breed-classification/raw/main/app/weights/best_cattle_model.pth"
+            print(f"[Model] Fetching weights from {url}...")
+            import urllib.request
+            urllib.request.urlretrieve(url, target)
+            print(f"[Model] Weights successfully loaded ({os.path.getsize(target)} bytes).")
+            return target
+        except Exception as e:
+            print(f"[Model] Could not auto-download weights: {e}")
+    return target
 
 MODEL_WEIGHTS_PATH = get_default_weights_path()
 
