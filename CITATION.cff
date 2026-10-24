@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use this software or benchmark dataset in your research, please cite it as below."
+authors:
+  - family-names: "Vijay"
+    given-names: "Aragunathan"
+title: "PashuDrishti AI: Indigenous Cattle Breed Vision & Explainability Platform"
+version: 1.0.0
+date-released: 2026-10-24
+url: "https://github.com/vj450-cpu/cattle-breed-classification"
+repository-code: "https://github.com/vj450-cpu/cattle-breed-classification"
+keywords:
+  - cattle-breed-classification
+  - convnext
+  - grad-cam
+  - computer-vision
+  - explainable-ai
+  - indigenous-cattle

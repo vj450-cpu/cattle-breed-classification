@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+  cattle-vision-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pashudrishti-ai
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - CATTLE_MODEL_PATH=/app/weights/best_cattle_model.pth
+    volumes:
+      - ./weights:/app/weights:ro
+      - ./app/static/samples:/app/app/static/samples
