@@ -26,11 +26,21 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnCloseCamera = document.getElementById('btnCloseCamera');
   const btnCancelCamera = document.getElementById('btnCancelCamera');
   const inputApiKey = document.getElementById('inputApiKey');
+  const inputBackendUrl = document.getElementById('inputBackendUrl');
 
-  // Load Saved API Key
+  // Load Saved Configurations
   const savedApiKey = localStorage.getItem('PASHUDRISHTI_GEMINI_KEY') || localStorage.getItem('GAUDRISHTI_GEMINI_KEY') || localStorage.getItem('BOV_GEMINI_KEY') || '';
   if (inputApiKey && savedApiKey) {
     inputApiKey.value = savedApiKey;
+  }
+  const savedBackendUrl = localStorage.getItem('PASHUDRISHTI_BACKEND_URL') || '';
+  if (inputBackendUrl && savedBackendUrl) {
+    inputBackendUrl.value = savedBackendUrl;
+  }
+
+  function getApiBaseUrl() {
+    const custom = (localStorage.getItem('PASHUDRISHTI_BACKEND_URL') || '').trim();
+    return custom ? custom.replace(/\/+$/, '') : '';
   }
 
   // DOM Elements - Upload & Viewport
@@ -120,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function loadSamples() {
     let samples = FALLBACK_SAMPLES;
     try {
-      const res = await fetch('/api/samples');
+      const res = await fetch(`${getApiBaseUrl()}/api/samples`);
       if (res.ok) {
         const data = await res.json();
         if (data.samples && data.samples.length > 0) {
@@ -177,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
       formData.append('alpha', alpha);
 
       try {
-        const res = await fetch('/api/predict', { method: 'POST', body: formData });
+        const res = await fetch(`${getApiBaseUrl()}/api/predict`, { method: 'POST', body: formData });
         if (res.ok) {
           const data = await res.json();
           currentPredictions = data;
@@ -196,7 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
         formData.append('colormap', colormap);
         formData.append('alpha', alpha);
 
-        const res = await fetch('/api/predict', { method: 'POST', body: formData });
+        const res = await fetch(`${getApiBaseUrl()}/api/predict`, { method: 'POST', body: formData });
         if (res.ok) {
           const data = await res.json();
           currentPredictions = data;
@@ -542,7 +552,7 @@ document.addEventListener('DOMContentLoaded', () => {
     formData.append('hump_attention', att.hump_dewlap_body);
 
     try {
-      const res = await fetch('/api/explain-gemini', {
+      const res = await fetch(`${getApiBaseUrl()}/api/explain-gemini`, {
         method: 'POST',
         body: formData
       });
@@ -608,7 +618,12 @@ document.addEventListener('DOMContentLoaded', () => {
   btnSaveSettings.addEventListener('click', () => {
     const key = inputApiKey.value.trim();
     localStorage.setItem('PASHUDRISHTI_GEMINI_KEY', key);
+    if (inputBackendUrl) {
+      const backend = inputBackendUrl.value.trim();
+      localStorage.setItem('PASHUDRISHTI_BACKEND_URL', backend);
+    }
     settingsModal.style.display = 'none';
+    loadSamples();
   });
 
   [infoModal, settingsModal, cameraModal].forEach(m => {

@@ -7,14 +7,16 @@
 [![Three.js](https://img.shields.io/badge/3D%20Studio-Three.js-black.svg?logo=three.js&logoColor=white)](https://threejs.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![GitHub Pages Live](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-brightgreen.svg?logo=github&logoColor=white)](https://vj450-cpu.github.io/cattle-breed-classification/)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/vj450-cpu/cattle-breed-classification)
 
 > **A State-of-the-Art Deep Learning & Computer Vision System for 50 Indigenous & Dairy Cattle Breeds**, powered by **ConvNeXt-Small (384×384 bicubic)**, **Grad-CAM visual receptive field heatmaps**, **Tri-Zone anatomical saliency diagnostics**, and an **interactive 3D livestock morphology studio**.
 
 ---
 
-## 🌐 Live Interactive Web Platform
+## 🌐 Live Web Deployments
 
-### 👉 **[Experience Live Web App on GitHub Pages](https://vj450-cpu.github.io/cattle-breed-classification/)**
+- 📱 **Interactive Web App (GitHub Pages)**: [https://vj450-cpu.github.io/cattle-breed-classification/](https://vj450-cpu.github.io/cattle-breed-classification/)
+- ☁️ **Full-Stack Cloud Backend & Web Service (Render)**: Click the **Deploy to Render** button above or use Blueprint `render.yaml` for a permanent 24/7 cloud container URL (e.g. `https://pashudrishti-cattle-vision.onrender.com`).
 
 The complete single-page interactive web application is deployed live with zero setup required. Explore the 8 high-resolution bundled test presets (Gir, Kangayam, Ongole, Sahiwal, Hallikar, Punganur, Vechur, Kankrej), peel back the split-comparison slider to reveal Grad-CAM attention heatmaps, inspect Top-5 competing candidate breeds, and rotate the 3D anatomical cattle model.
 

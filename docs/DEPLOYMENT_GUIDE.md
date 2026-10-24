@@ -82,8 +82,37 @@ Hugging Face Spaces offers free 16GB RAM CPU and NVIDIA T4/A10G GPU tiers, makin
 
 ---
 
-## ☁️ 5. Render / Railway Cloud Deployment
+## ☁️ 5. Cloud Deployment on Render (Recommended)
 
-The repository includes `render.yaml` and `Procfile` for 1-click cloud container deployment:
-- **Render**: Connect your GitHub repository, choose **Web Service**, and select Docker Runtime or Python Runtime with start command `uvicorn app.main:app --host 0.0.0.0 --port $PORT`.
-- **Railway**: Connect GitHub repository and deploy using the root `Dockerfile`.
+Render provides a **free cloud container web service with a permanent HTTPS URL**, making it the best platform for hosting both the FastAPI backend and interactive frontend together without serverless size limits.
+
+### Option A: 1-Click Blueprint Deploy
+1. Click the **Deploy to Render** button or visit:
+   👉 **[https://render.com/deploy?repo=https://github.com/vj450-cpu/cattle-breed-classification](https://render.com/deploy?repo=https://github.com/vj450-cpu/cattle-breed-classification)**
+2. Sign in with GitHub (`vj450-cpu`).
+3. Render automatically discovers `render.yaml` and starts building the Docker container.
+4. Once built (2–3 minutes), your service is live 24/7 at:
+   `https://pashudrishti-cattle-vision.onrender.com` (or your chosen service name).
+
+### Option B: Manual Web Service Setup
+1. Go to [Render Dashboard](https://dashboard.render.com/) and click **New + > Web Service**.
+2. Select your GitHub repository: `vj450-cpu/cattle-breed-classification`.
+3. Choose:
+   - **Environment**: `Docker`
+   - **Region**: Oregon (or nearest)
+   - **Branch**: `main`
+   - **Plan**: Free
+4. Click **Create Web Service**.
+
+---
+
+## ▲ 6. Vercel Deployment (Frontend + Cloud Backend)
+
+If you prefer a `https://<your-name>.vercel.app` domain:
+
+1. Import your GitHub repository on [Vercel](https://vercel.com/new).
+2. Set Root Directory to `./` and Framework Preset to `Other`.
+3. Vercel automatically deploys the frontend application with global Edge CDN caching.
+4. In the app settings on Vercel, enter your deployed Render backend URL (`https://your-service.onrender.com`) in the **Cloud / Local Backend API URL** setting.
+5. All classification, camera captures, and Grad-CAM requests from your Vercel site will route seamlessly to your Render cloud backend!
+
